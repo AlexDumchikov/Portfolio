@@ -1,0 +1,26 @@
+### **Dashboard Overview**  
+This **Sales Dynamics Dashboard** visualizes **Sales data** with interactive charts and summary cards. Key features:  
+
+#### **What It Shows:**  
+1. **Sales Trends** – Daily, weekly, monthly, quarterly, or yearly sales.  
+2. **Comparison** – Current vs. past period (1 year ago).  
+3. **Anomaly Detection** – Highlights unusual sales deviations (>20% from moving average).  
+4. **Key Metrics** – YTD, MTD, WTD, last 3M/6M/12M performance with **% change**.  
+
+---
+
+### **Technical Features:**  
+1. **Interactive Charting** – Built with **Chart.js** (zoomable, tooltips, dynamic grouping).  
+2. **Data Grouping** – Supports daily, weekly, monthly, quarterly, yearly aggregation.  
+3. **Dynamic Summaries** – Auto-calculates trends, % changes, and directional indicators (↑/↓).  
+4. **Real-Time Updates** – Adjusts charts & summaries when filters change.  
+5. **Responsive UI** – Clean, card-based layout with MS Teams integration.  
+6. **Plugins Used:**  
+   - `chartjs-plugin-datalabels` (value labels)  
+   - `chartjs-adapter-date-fns` (date handling)  
+
+---
+
+**Filters:** Date range, period grouping, toggle anomalies/average/past period.  
+
+A **lightweight, self-contained HTML/JS solution** for sales performance tracking. 🚀
