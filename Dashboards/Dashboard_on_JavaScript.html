@@ -2,221 +2,630 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sales Report</title>
-  <!-- Include Chart.js library -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Include date-fns adapter for Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <!-- Include DataLabels plugin for Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <style>
-    /* Main page styling */
+    /* Define CSS variables for themes */
+    :root {
+      /* Dark theme (default) */
+      --bg-body: #0f1a2b;
+      --text-body: #e0e6f0;
+      --text-source-label: #8b96a8;
+      --text-h1: #ffffff;
+      --bg-summary-card: #1c2d45;
+      --border-summary-card: #2a3b55;
+      --shadow-card: rgba(0,0,0,0.3);
+      --bg-indicator-pos: rgba(0, 220, 130, 0.2);
+      --color-indicator-pos: #00dc82;
+      --bg-indicator-neg: rgba(255, 70, 70, 0.2);
+      --color-indicator-neg: #ff4646;
+      --bg-indicator-neu: rgba(150, 160, 180, 0.2);
+      --color-indicator-neu: #96a0b4;
+      --text-summary-title: #b8c6db;
+      --text-summary-value: #ffffff;
+      --color-diff-pos: #00dc82;
+      --color-diff-neg: #ff4646;
+      --bg-filter: #1c2d45;
+      --border-filter-div: #375680;
+      --text-filter-label: #b8c6db;
+      --bg-input: #233751;
+      --border-input: #375680;
+      --text-input: #e0e6f0;
+      --input-scheme: dark; /* For date picker styling */
+      --bg-grouping-block: #234763;
+      --bg-past-period-block: rgba(255,140,0,0.2);
+      --bg-anomalies-block: rgba(255,70,70,0.2);
+      --bg-average-block: rgba(147,112,219,0.2);
+      --bg-chart-container: #1c2d45;
+      /* Chart colors for dark theme */
+      --chart-actual: #90FF0A;
+      --chart-past: #E6542A;
+      --chart-past-fill-start: rgba(230,84,42,0.8);
+      --chart-past-fill-end: rgba(28, 45, 69, 0.1); /* Matches --bg-chart-container */
+      --chart-average: white;
+      --chart-anomalies: #AD0AFD;
+      --chart-legend-text: #ffffff;
+      /* Adjusted ticks/grid color for dark theme - less visible */
+      --chart-ticks-text: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
+      --chart-title-text: #ffffff;
+      --theme-toggle-bg: #2a3b55;
+      --theme-toggle-text: #e0e6f0;
+      --theme-toggle-hover-bg: #375680;
+      /* New grid color variable */
+      --chart-grid-color: rgba(255, 255, 255, 0.03); /* Lighter grid for dark theme */
+    }
+
+    body.light-theme {
+      /* Light theme */
+      --bg-body: #f9f9f9;
+      --text-body: #333333;
+      --text-source-label: gray;
+      --text-h1: #333333;
+      --bg-summary-card: #ffffff;
+      --border-summary-card: #f0f0f0;
+      --shadow-card: rgba(0,0,0,0.1);
+      --bg-indicator-pos: rgba(0, 128, 0, 0.1);
+      --color-indicator-pos: green;
+      --bg-indicator-neg: rgba(255, 0, 0, 0.1);
+      --color-indicator-neg: red;
+      --bg-indicator-neu: rgba(128, 128, 128, 0.1);
+      --color-indicator-neu: gray;
+      --text-summary-title: #333333;
+      --text-summary-value: #333333;
+      --color-diff-pos: green;
+      --color-diff-neg: red;
+      --bg-filter: #ffffff;
+      --border-filter-div: #cccccc;
+      --text-filter-label: #333333;
+      --bg-input: #ffffff;
+      --border-input: #cccccc;
+      --text-input: #333333;
+      --input-scheme: light;
+      --bg-grouping-block: #e0f7ff;
+      --bg-past-period-block: rgba(255,165,0,0.2);
+      --bg-anomalies-block: rgba(255,0,0,0.2);
+      --bg-average-block: rgba(128,0,128,0.2);
+      --bg-chart-container: #ffffff; /* Transparent container in light theme */
+      /* Chart colors for light theme - These match the colors from light_.html */
+      --chart-actual: blue;
+      --chart-past: orange;
+      --chart-past-fill-start: rgba(255,165,0,0.8);
+      --chart-past-fill-end: rgba(255,255,255,0.1); /* Matches --bg-chart-container */
+      --chart-average: purple;
+      --chart-anomalies: red;
+      --chart-legend-text: #333333;
+      /* Adjusted ticks/grid color for light theme - less visible */
+      --chart-ticks-text: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+      --chart-title-text: #333333;
+      --theme-toggle-bg: #e0e6f0;
+      --theme-toggle-text: #0f1a2b;
+      --theme-toggle-hover-bg: #cccccc;
+      /* New grid color variable */
+      --chart-grid-color: rgba(0, 0, 0, 0.03); /* Lighter grid for light theme */
+    }
+
+    /* Basic page styles */
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f9f9f9;
+      margin: 10px; /* Reduced margin */
+      background: var(--bg-body);
       position: relative;
+      color: var(--text-body);
+      transition: background-color 0.0001s, color 0.0001s; /* Smooth transition */
+      padding-top: 60px; /* Add padding to top to prevent content from being hidden by fixed header */
     }
-    
-    /* Source label styling */
+
+    /* Positioning container for top-right elements */
+    .top-right-controls {
+        position: fixed; /* Use fixed positioning */
+        top: 5px;
+        right: 10px;
+        display: flex;
+        /* flex-direction: column;  Stack items vertically by default */
+        align-items: center; /* Align items vertically in the center */
+        gap: 5px; /* Space between items */
+        z-index: 1000; /* Ensure it's above other content */
+    }
+
+    /* Theme toggle button */
+    #theme-toggle {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        background-color: var(--theme-toggle-bg);
+        color: var(--theme-toggle-text);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        box-shadow: var(--shadow-card);
+        transition: background-color 0.0001s, color 0.0001s;
+    }
+    #theme-toggle:hover {
+        background-color: var(--theme-toggle-hover-bg);
+    }
+
+    /* Source label */
     .source-label {
       position: absolute;
-      top: 5px;
+      top: 5px; /* Keep slightly above other elements */
       left: 5px;
       font-size: 11px;
-      color: gray;
+      color: var(--text-source-label);
       font-style: italic;
     }
-    
-    /* MS Teams icon styling */
-    .teams-icon {
-      position: absolute;
-      top: 0px;
-      right: 0px;
-      width: 45px;
-      height: 45px;
+
+    /* MS Teams icon */
+    .lkdn-icon {
+      /* Reduced size by half */
+      width: 22.5px;
+      height: 22.5px;
       cursor: pointer;
-      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); 
+      box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Adjust shadow */
+      border-radius: 3px; /* Adjust border-radius */
     }
-    
-    /* Page header styling */
+
+    /* Page title */
     h1 {
       text-align: center;
       font-size: 20px;
-      margin-top: 30px;
+      margin-top: 0; /* Removed top margin */
+      margin-bottom: 5px; /* Reduced space below title */
+      color: var(--text-h1);
     }
-    
+
     /* Summary cards container */
     .summary-container {
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 15px; 
-      justify-content: center; 
-      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px; /* Reduced gap */
+      justify-content: center;
+      margin-bottom: 10px; /* Reduced margin */
     }
-    
-    /* Individual summary card styling */
+
+    /* Individual summary card styles */
     .summary-card {
       position: relative;
       display: flex;
       flex-direction: column;
-      min-width: 140px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 15px;
+      min-width: 120px; /* Slightly reduced min-width */
+      flex-grow: 1; /* Allow cards to grow */
+      flex-basis: 120px; /* Suggest a base width */
+      background: var(--bg-summary-card);
+      border-radius: 8px; /* Slightly reduced border-radius */
+      box-shadow: var(--shadow-card);
+      padding: 10px; /* Reduced padding */
       text-align: left;
-      border: 1px solid #f0f0f0;
+      border: 1px solid var(--border-summary-card);
       overflow: hidden;
+      transition: background-color 0.0001s, border-color 0.0001s;
     }
-    
-    /* Indicator icon styling */
+
+    /* Indicator icon styles */
     .summary-indicator {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       position: absolute;
-      top: 15px;
-      left: 15px;
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
+      top: 10px; /* Adjusted position */
+      left: 10px; /* Adjusted position */
+      width: 20px; /* Slightly reduced size */
+      height: 20px; /* Slightly reduced size */
+      border-radius: 4px; /* Slightly reduced border-radius */
+      transition: background-color 0.0001s, color 0.0001s;
     }
-    
+
     /* Positive indicator (green) */
     .indicator-positive {
-      background-color: rgba(0, 128, 0, 0.1);
-      color: green;
+      background-color: var(--bg-indicator-pos);
+      color: var(--color-indicator-pos);
     }
-    
+
     /* Negative indicator (red) */
     .indicator-negative {
-      background-color: rgba(255, 0, 0, 0.1);
-      color: red;
+      background-color: var(--bg-indicator-neg);
+      color: var(--color-indicator-neg);
     }
-    
+
     /* Neutral indicator (gray) */
     .indicator-neutral {
-      background-color: rgba(128, 128, 128, 0.1);
-      color: gray;
+      background-color: var(--bg-indicator-neu);
+      color: var(--color-indicator-neu);
     }
-    
-    /* Summary title styling */
+
+    /* Summary title */
     .summary-title {
       font-weight: bold;
-      margin-bottom: 8px;
-      padding-left: 32px;
+      margin-bottom: 5px; /* Reduced margin */
+      padding-left: 28px; /* Adjusted space for the indicator icon */
+      font-size: 0.9em; /* Slightly reduced font size */
+      color: var(--text-summary-title);
+      transition: color 0.0001s;
     }
-    
-    /* Summary value styling */
+
+    /* Summary value */
     .summary-value {
-      font-size: 1.3em;
+      font-size: 1.2em; /* Slightly reduced font size */
       font-weight: bold;
-      margin-bottom: 4px;
+      margin-bottom: 2px; /* Reduced margin */
+      color: var(--text-summary-value);
+      transition: color 0.0001s;
     }
-    
-    /* Difference indicator styling */
+
+    /* Difference indicator */
     .summary-diff {
-      font-size: 0.9em;
+      font-size: 0.8em; /* Slightly reduced font size */
       display: flex;
-      gap: 5px;
+      gap: 3px; /* Reduced gap */
+      color: var(--text-body); /* Inherit default text color */
+      transition: color 0.0001s;
     }
-    
-    /* Positive difference styling */
+
+    /* Positive difference */
     .diff-positive {
-      color: green;
+      color: var(--color-diff-pos);
     }
-    
-    /* Negative difference styling */
+
+    /* Negative difference */
     .diff-negative {
-      color: red;
+      color: var(--color-diff-neg);
     }
-    
-    /* Amount and percentage styling */
+
+    /* Difference amount and percentage */
     .diff-amount, .diff-percentage {
       font-weight: 500;
     }
-    
-    /* Filter container styling */
+
+    /* Filter container */
     .filter-container {
-      display: flex; 
-      flex-wrap: wrap; 
-      align-items: center; 
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
       justify-content: center;
-      gap: 15px; 
-      margin-bottom: 20px; 
-      padding: 10px; 
-      background: #fff;
-      border-radius: 8px; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      gap: 10px; /* Reduced gap */
+      margin-bottom: 10px; /* Reduced margin */
+      padding: 8px; /* Reduced padding */
+      background: var(--bg-filter);
+      border-radius: 6px; /* Slightly reduced border-radius */
+      box-shadow: var(--shadow-card);
+      transition: background-color 0.0001s;
     }
-    
-    /* Individual filter element styling */
+
+    /* Individual filter element */
     .filter-container > div {
-      border: 1px solid #ccc;
-      padding: 5px;
-      border-radius: 4px;
+      border: 1px solid var(--border-filter-div);
+      padding: 4px; /* Reduced padding */
+      border-radius: 3px; /* Slightly reduced border-radius */
+      transition: background-color 0.0001s, border-color 0.0001s;
     }
-    
-    /* Filter label styling */
-    .filter-container label { 
-      font-weight: bold; 
-      margin-right: 5px; 
+
+    /* Filter label */
+    .filter-container label {
+      font-weight: bold;
+      margin-right: 4px; /* Reduced margin */
+      font-size: 0.9em; /* Slightly reduced font size */
+      color: var(--text-filter-label);
+      transition: color 0.0001s;
     }
-    
-    /* Input and select styling */
+
+    /* Input and select field styles */
     .filter-container input, .filter-container select {
-      padding: 5px 8px; 
-      border: 1px solid #ccc; 
-      border-radius: 4px;
+      padding: 4px 6px; /* Reduced padding */
+      border: 1px solid var(--border-input);
+      border-radius: 3px; /* Slightly reduced border-radius */
+      background-color: var(--bg-input);
+      color: var(--text-input);
+      font-size: 0.9em; /* Slightly reduced font size */
+      transition: background-color 0.0001s, color 0.0001s, border-color 0.0001s;
     }
-    
+
+    /* Date input calendar styling */
+    .filter-container input[type="date"] {
+       color-scheme: var(--input-scheme);
+    }
+    .filter-container input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(var(--input-scheme, 0)); /* Invert calendar icon in dark theme */
+    }
+
+
     /* Grouping block highlight */
     .grouping-block {
-      background-color: #e0f7ff;
+      background-color: var(--bg-grouping-block);
     }
-    
-    /* Past period highlight */
-    .past-period-block { 
-      background-color: rgba(255,165,0,0.2); 
+
+    /* Past period block highlight */
+    .past-period-block {
+      background-color: var(--bg-past-period-block);
     }
-    
-    /* Anomalies highlight */
-    .anomalies-block { 
-      background-color: rgba(255,0,0,0.2); 
+
+    /* Anomalies block highlight */
+    .anomalies-block {
+      background-color: var(--bg-anomalies-block);
     }
-    
-    /* Average highlight */
-    .average-block { 
-      background-color: rgba(128,0,128,0.2); 
+
+    /* Average block highlight */
+    .average-block {
+      background-color: var(--bg-average-block);
     }
-    
-    /* Chart container styling */
+
+    /* Chart container */
     .chart-container {
-      border-radius: 8px; 
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: var(--shadow-card);
+      background-color: var(--bg-chart-container);
+      padding: 10px;
+      transition: background-color 0.0001s;
+      /* Modified width and margin */
+      width: 95%; /* Decreased width */
+      margin: 10px auto; /* Center the block and add vertical margin */
+      height: 400px; /* Keep original height or adjust as needed */
     }
+
+    /* Make canvas responsive within its container */
+    #salesChart {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* --- Responsive Adjustments --- */
+
+    /* For screens smaller than 600px */
+    @media (max-width: 600px) {
+        body {
+            margin: 5px; /* Even less margin on smaller screens */
+            padding-top: 100px; /* More padding for fixed header */
+        }
+
+        .top-right-controls {
+            flex-direction: column; /* Stack vertically */
+            align-items: flex-end; /* Align to the right */
+            gap: 3px; /* Smaller gap */
+            top: 5px; /* Adjust top position */
+            right: 5px; /* Adjust right position */
+        }
+
+        .lkdn-icon {
+            width: 20px; /* Slightly smaller icon */
+            height: 20px;
+        }
+
+        #theme-toggle {
+            padding: 6px 10px; /* Smaller padding */
+            font-size: 11px; /* Smaller font size */
+        }
+
+        h1 {
+            font-size: 18px; /* Smaller title font size */
+            margin-bottom: 5px; /* Reduced margin */
+        }
+
+        .summary-container {
+            gap: 5px; /* Even less gap between summary cards */
+            margin-bottom: 5px; /* Reduced margin */
+        }
+
+        .summary-card {
+            min-width: 100px; /* Allow cards to shrink more */
+            flex-basis: 100px; /* Suggest a smaller base width */
+            padding: 8px; /* Reduced padding */
+        }
+
+        .summary-indicator {
+            top: 8px; /* Adjusted position */
+            left: 8px; /* Adjusted position */
+            width: 18px; /* Smaller size */
+            height: 18px; /* Smaller size */
+        }
+
+         .summary-title {
+            padding-left: 24px; /* Adjusted space */
+            font-size: 0.8em; /* Smaller font size */
+        }
+
+        .summary-value {
+            font-size: 1em; /* Smaller font size */
+        }
+
+        .summary-diff {
+            font-size: 0.7em; /* Smaller font size */
+            gap: 2px; /* Smaller gap */
+        }
+
+        .filter-container {
+            gap: 8px; /* Reduced gap */
+            margin-bottom: 8px; /* Reduced margin */
+            padding: 6px; /* Reduced padding */
+            flex-direction: column; /* Stack filters vertically on small screens */
+            align-items: stretch; /* Stretch filters to fill width */
+        }
+
+        .filter-container > div {
+            padding: 3px; /* Reduced padding */
+        }
+
+        .filter-container label,
+        .filter-container input,
+        .filter-container select {
+             font-size: 0.8em; /* Smaller font size for filter elements */
+        }
+
+        .chart-container {
+            padding: 5px; /* Reduced padding */
+            height: 300px; /* Potentially reduce chart height on very small screens */
+            width: 100%; /* Full width on small screens */
+            margin: 8px auto; /* Reduced vertical margin */
+        }
+    }
+
+    /* For screens between 601px and 900px */
+    @media (min-width: 601px) and (max-width: 900px) {
+        body {
+            padding-top: 70px; /* Adjust padding for fixed header */
+        }
+        .top-right-controls {
+             top: 5px;
+             right: 8px;
+             gap: 4px;
+             flex-direction: row; /* Arrange horizontally */
+        }
+        .lkdn-icon {
+            width: 21px; /* Slightly smaller icon */
+            height: 21px;
+        }
+        #theme-toggle {
+            padding: 7px 11px;
+            font-size: 12px;
+        }
+        h1 {
+            font-size: 19px;
+        }
+        .summary-container {
+            gap: 8px;
+            margin-bottom: 10px; /* Reduced margin */
+        }
+        .summary-card {
+             min-width: 130px;
+             flex-basis: 130px;
+             padding: 12px;
+        }
+         .summary-indicator {
+            top: 12px;
+            left: 12px;
+            width: 22px;
+            height: 22px;
+        }
+         .summary-title {
+            padding-left: 30px;
+            font-size: 0.85em;
+        }
+         .summary-value {
+            font-size: 1.1em;
+        }
+         .summary-diff {
+            font-size: 0.75em;
+            gap: 3px;
+        }
+        .filter-container {
+            gap: 12px;
+            margin-bottom: 10px; /* Reduced margin */
+            padding: 9px;
+            flex-direction: column; /* Stack filters vertically */
+            align-items: stretch;
+        }
+        .filter-container > div {
+            padding: 3px;
+        }
+         .filter-container label,
+        .filter-container input,
+        .filter-container select {
+             font-size: 0.9em;
+        }
+        .chart-container {
+            height: 350px; /* Adjust chart height */
+            width: 95%; /* Decreased width */
+            margin: 10px auto; /* Center and add vertical margin */
+        }
+    }
+
+    /* Default styles for larger screens (>= 901px) */
+    @media (min-width: 901px) {
+         body {
+            padding-top: 0; /* No padding needed for larger screens */
+        }
+        .top-right-controls {
+            position: absolute; /* Use absolute positioning */
+            flex-direction: row; /* Arrange horizontally */
+            align-items: center;
+            gap: 5px;
+            top: -3px; /* Adjust position */
+            right: 5px; /* Adjust position */
+        }
+         .lkdn-icon {
+            /* Reduced size by half */
+            width: 22.5px;
+            height: 22.5px;
+        }
+        #theme-toggle {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+         h1 {
+            font-size: 20px;
+            margin-top: 10px;
+            margin-bottom: 5px; /* Reduced margin */
+        }
+         .summary-container {
+            gap: 15px;
+            margin-bottom: 10px; /* Reduced margin */
+        }
+         .summary-card {
+             min-width: 140px;
+             flex-basis: 140px;
+             padding: 15px;
+        }
+         .summary-indicator {
+            top: 15px;
+            left: 15px;
+            width: 24px;
+            height: 24px;
+        }
+         .summary-title {
+            padding-left: 32px;
+            font-size: 0.9em;
+        }
+         .summary-value {
+            font-size: 1.3em;
+        }
+         .summary-diff {
+            font-size: 0.9em;
+            gap: 5px;
+        }
+        .filter-container {
+            gap: 15px;
+            margin-bottom: 10px; /* Reduced margin */
+            padding: 10px;
+             flex-direction: row; /* Arrange filters horizontally */
+             align-items: center;
+             justify-content: center;
+        }
+         .filter-container > div {
+            padding: 5px;
+        }
+         .filter-container label,
+        .filter-container input,
+        .filter-container select {
+             font-size: 1em;
+        }
+        .chart-container {
+            height: 400px; /* Default chart height */
+            width: 98%; /* Decreased width */
+            margin: 10px auto; /* Center and add vertical margin */
+        }
+    }
+
+
   </style>
 </head>
 <body>
-  <!-- Source information label -->
-  <div class="source-label">Source: random data</div>
-  
-  <!-- MS Teams contact icon -->
-  <a href="https://teams.microsoft.com/l/chat/0/0?users=vorota516@gmail.com" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Microsoft_Teams.png/258px-Microsoft_Teams.png" alt="MS Teams" class="teams-icon">
-  </a>
-  
-  <!-- Page header -->
-  <h1>Test Sales Dynamics</h1>
-  
-  <!-- Summary cards container -->
+  <div class="source-label">Source: Random Data</div>
+
+  <div class="top-right-controls">
+    <button id="theme-toggle">Light Mode</button>
+    <a href="https://www.linkedin.com/in/aleksandr-dumchikov-a1894188?jobid=1234&lipi=urn%3Ali%3Apage%3Ad_jobs_easyapply_pdfgenresume%3BTMd%2BCkeZQ2CwFGpiFIL4Jw%3D%3D&licu=urn%3Ali%3Acontrol%3Ad_jobs_easyapply_pdfgenresume-v02_profile" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/LinkedIn_icon.svg/1024px-LinkedIn_icon.svg.png" alt="Linkedin" class="lkdn-icon">
+    </a>
+  </div>
+
+
+  <h1>SALES DYNAMICS (DEMO)</h1>
+
   <div class="summary-container">
-    <!-- Year-to-date summary card -->
     <div class="summary-card" id="summary-ytd">
-      <div class="summary-indicator">
+      <div class="summary-indicator indicator-neutral">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3L14 9H10V13H6V9H2L8 3Z" fill="currentColor" />
+          <path d="M3 8H13" fill="currentColor" />
         </svg>
       </div>
       <div class="summary-title">YTD</div>
@@ -226,42 +635,39 @@
         <span class="diff-percentage">(0%)</span>
       </div>
     </div>
-    
-    <!-- Week-to-date summary card -->
+
     <div class="summary-card" id="summary-lastweek">
-      <div class="summary-indicator">
+       <div class="summary-indicator indicator-neutral">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3L14 9H10V13H6V9H2L8 3Z" fill="currentColor" />
+           <path d="M3 8H13" fill="currentColor" />
         </svg>
       </div>
-      <div class="summary-title">Week-To-Date</div>
+      <div class="summary-title">Week to Date</div>
       <div class="summary-value">0</div>
       <div class="summary-diff">
         <span class="diff-amount">0</span>
         <span class="diff-percentage">(0%)</span>
       </div>
     </div>
-    
-    <!-- Month-to-date summary card -->
+
     <div class="summary-card" id="summary-lastmonth">
-      <div class="summary-indicator">
+       <div class="summary-indicator indicator-neutral">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3L14 9H10V13H6V9H2L8 3Z" fill="currentColor" />
+           <path d="M3 8H13" fill="currentColor" />
         </svg>
       </div>
-      <div class="summary-title">Month-To-Date</div>
+      <div class="summary-title">Month to Date</div>
       <div class="summary-value">0</div>
       <div class="summary-diff">
         <span class="diff-amount">0</span>
         <span class="diff-percentage">(0%)</span>
       </div>
     </div>
-    
-    <!-- Last 3 months summary card -->
+
     <div class="summary-card" id="summary-last3m">
-      <div class="summary-indicator">
+       <div class="summary-indicator indicator-neutral">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3L14 9H10V13H6V9H2L8 3Z" fill="currentColor" />
+           <path d="M3 8H13" fill="currentColor" />
         </svg>
       </div>
       <div class="summary-title">Last 3M</div>
@@ -271,12 +677,11 @@
         <span class="diff-percentage">(0%)</span>
       </div>
     </div>
-    
-    <!-- Last 6 months summary card -->
+
     <div class="summary-card" id="summary-last6m">
-      <div class="summary-indicator">
+       <div class="summary-indicator indicator-neutral">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3L14 9H10V13H6V9H2L8 3Z" fill="currentColor" />
+           <path d="M3 8H13" fill="currentColor" />
         </svg>
       </div>
       <div class="summary-title">Last 6M</div>
@@ -286,12 +691,11 @@
         <span class="diff-percentage">(0%)</span>
       </div>
     </div>
-    
-    <!-- Last 12 months summary card -->
+
     <div class="summary-card" id="summary-last12m">
-      <div class="summary-indicator">
+       <div class="summary-indicator indicator-neutral">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3L14 9H10V13H6V9H2L8 3Z" fill="currentColor" />
+           <path d="M3 8H13" fill="currentColor" />
         </svg>
       </div>
       <div class="summary-title">Last 12M</div>
@@ -303,21 +707,17 @@
     </div>
   </div>
 
-  <!-- Filters container -->
   <div class="filter-container">
-    <!-- Start date filter -->
     <div>
       <label for="startDate">Start:</label>
       <input type="date" id="startDate">
     </div>
-    
-    <!-- End date filter -->
+
     <div>
       <label for="endDate">End:</label>
       <input type="date" id="endDate">
     </div>
-    
-    <!-- Grouping selector -->
+
     <div class="grouping-block">
       <label for="grouping">Grouping:</label>
       <select id="grouping">
@@ -328,51 +728,44 @@
         <option value="yearly">Yearly</option>
       </select>
     </div>
-    
-    <!-- Past period toggle -->
+
     <div class="extra-checkbox past-period-block">
       <label for="togglePastPeriod">Past Period:</label>
-      <input type="checkbox" id="togglePastPeriod" checked>
-    </div>
-    
-    <!-- Grid toggle -->
+      <input type="checkbox" id="togglePastPeriod"> </div>
+
     <div class="extra-checkbox">
       <label for="toggleGrid">Grid:</label>
       <input type="checkbox" id="toggleGrid" checked>
     </div>
-    
-    <!-- Data values toggle -->
+
     <div class="extra-checkbox">
-      <label for="toggleDataValues">data:</label>
+      <label for="toggleDataValues">Data:</label>
       <input type="checkbox" id="toggleDataValues">
     </div>
-    
-    <!-- Anomalies toggle -->
+
     <div class="extra-checkbox anomalies-block">
       <label for="toggleAnomalies">Anomalies:</label>
-      <input type="checkbox" id="toggleAnomalies" checked>
+      <input type="checkbox" id="toggleAnomalies">
     </div>
-    
-    <!-- Average toggle -->
+
     <div class="extra-checkbox average-block">
       <label for="toggleAverage">Average:</label>
       <input type="checkbox" id="toggleAverage">
     </div>
   </div>
-  
-  <!-- Chart container -->
+
   <div class="chart-container">
-    <canvas id="salesChart" width="1200" height="400"></canvas>
+    <canvas id="salesChart"></canvas>
   </div>
-  
+
   <script>
     // Register Chart.js plugins
     Chart.register(ChartDataLabels);
-    
+
     /**
      * Formats a date as YYYY-MM-DD
      * @param {Date|string} date - The date to format
-     * @return {string} Formatted date string
+     * @return {string} The formatted date string
      */
     function formatDate(date) {
       const d = new Date(date);
@@ -383,11 +776,11 @@
       if (day.length < 2) day = '0' + day;
       return [year, month, day].join('-');
     }
-    
+
     /**
      * Subtracts one year from a date string
      * @param {string} dateStr - Date string in YYYY-MM-DD format
-     * @return {string} Date string one year prior
+     * @return {string} Date string one year earlier
      */
     function subtractOneYear(dateStr) {
       const date = new Date(dateStr);
@@ -396,7 +789,7 @@
     }
 
     /**
-     * Gets the ISO week year for a date
+     * Gets the ISO week-numbering year for a date
      * @param {Date} date - The date to check
      * @return {number} The ISO week year
      */
@@ -406,7 +799,7 @@
       target.setDate(target.getDate() - dayNr + 3);
       return target.getFullYear();
     }
-    
+
     /**
      * Groups sales data by the specified time period
      * @param {Array} data - Array of sales data objects
@@ -419,60 +812,60 @@
         const date = new Date(item.date);
         let key = '';
         let sortDate = date;
-        
+
         switch (grouping) {
           case 'daily':
             key = item.date;
             sortDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             break;
-            
+
           case 'weekly': {
             const dateStr = formatDate(date);
-            // Special handling for the week spanning year change (2024-12-30 to 2025-01-05)
+            // Special handling for week spanning year change (e.g., 2024-12-30 to 2025-01-05)
             if (dateStr >= "2024-12-30" && dateStr <= "2025-01-05") {
-              key = "2025-01";
-              sortDate = new Date("2024-12-30");
+              key = "2025-01"; // Use year and week number
+              sortDate = new Date("2024-12-30"); // Start of the week for sorting
             } else {
               const weekNumber = getWeekNumber(date);
               const weekStr = ("0" + weekNumber).slice(-2);
               const isoYear = getISOWeekYear(date);
               key = isoYear + '-' + weekStr;
-              const dayNr = (date.getDay() + 6) % 7;
+              const dayNr = (date.getDay() + 6) % 7; // 0 = Monday, 6 = Sunday
               const monday = new Date(date);
-              monday.setDate(date.getDate() - dayNr);
+              monday.setDate(date.getDate() - dayNr); // Monday's date
               sortDate = monday;
             }
             break;
           }
-            
+
           case 'monthly':
             key = date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2);
             sortDate = new Date(date.getFullYear(), date.getMonth(), 1);
             break;
-            
+
           case 'quarterly': {
             const quarter = Math.floor(date.getMonth() / 3) + 1;
             key = date.getFullYear() + '-Q' + quarter;
             sortDate = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
             break;
           }
-            
+
           case 'yearly':
             key = date.getFullYear().toString();
             sortDate = new Date(date.getFullYear(), 0, 1);
             break;
-            
-          default:
+
+          default: // Default to daily
             key = item.date;
             sortDate = date;
         }
-        
+
         if (!groups[key]) {
           groups[key] = { total: 0, sortDate: sortDate, label: key };
         }
         groups[key].total += item.sales;
       });
-      
+
       // Convert groups object to array and sort by date
       const result = [];
       for (let k in groups) {
@@ -481,20 +874,21 @@
       result.sort((a, b) => a.sortDate - b.sortDate);
       return result;
     }
-    
+
     /**
      * Gets the week number for a date
      * @param {Date} date - The date to check
      * @return {number} The week number
      */
     function getWeekNumber(date) {
-      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const dayNum = d.getUTCDay() || 7;
-      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-      return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     }
-    
+
+
     /**
      * Gets the label for the past period (1 year ago)
      * @param {string} label - Current period label
@@ -522,11 +916,11 @@
         const year = parseInt(label) - 1;
         return year.toString();
       }
-      return label;
+      return label; // Return original label if type not recognized
     }
-    
+
     /**
-     * Formats the X-axis label based on grouping type
+     * Formats the X-axis label depending on the grouping type
      * @param {Date} date - The date to format
      * @param {string} grouping - Grouping type
      * @return {string} Formatted label
@@ -534,14 +928,16 @@
     function formatXAxisLabel(date, grouping) {
       if (grouping === 'weekly') {
         const dateStr = formatDate(date);
-        // Special handling for the week spanning year change
+        // Special handling for week spanning year change
         if (dateStr >= "2024-12-30" && dateStr <= "2025-01-05") {
-          return "2025-01";
+          return "2025-01"; // Label for the first week of 2025
         }
         const weekNumber = getWeekNumber(date);
         const weekStr = ("0" + weekNumber).slice(-2);
-        return date.getFullYear() + '-' + weekStr;
+        const isoYear = getISOWeekYear(date); // Use ISO year
+        return isoYear + '-' + weekStr;
       } else if (grouping === 'monthly') {
+        // Format 'Jan-24'
         return date.toLocaleString('en-US', { month: 'short', year: '2-digit' }).replace(' ', '-');
       } else if (grouping === 'quarterly') {
         const quarter = Math.floor(date.getMonth() / 3) + 1;
@@ -549,12 +945,13 @@
       } else if (grouping === 'yearly') {
         return date.getFullYear().toString();
       }
-      return date.toLocaleDateString();
+      // Default to daily date
+      return date.toLocaleDateString('en-US');
     }
-    
+
     /**
-     * Sums sales within a date range
-     * @param {Array} data - Sales data array
+     * Sums sales within a given date range
+     * @param {Array} data - Array of sales data
      * @param {string} start - Start date string
      * @param {string} end - End date string
      * @return {number} Total sales in the range
@@ -564,35 +961,45 @@
       const endTime = new Date(end).getTime();
       let sum = 0;
       data.forEach(item => {
-        const t = new Date(item.date).getTime();
+        // Ensure we compare dates only, ignoring time
+        const itemDateOnly = new Date(item.date);
+        itemDateOnly.setHours(0, 0, 0, 0);
+        const t = itemDateOnly.getTime();
+
         if (t >= startTime && t <= endTime) {
           sum += item.sales;
         }
       });
       return sum;
     }
-    
+
+
     /**
      * Gets the date N days before a given date
-     * @param {string} dateStr - Starting date string
+     * @param {string} dateStr - Start date string
      * @param {number} n - Number of days to go back
-     * @return {string} Date string N days before
+     * @return {string} Date string N days prior
      */
     function dateNDaysBefore(dateStr, n) {
       const d = new Date(dateStr);
       d.setDate(d.getDate() - n);
       return formatDate(d);
     }
-    
+
     /**
-     * Formats a number with 1 decimal place
+     * Formats a number with 1 decimal place using English locale
      * @param {number} num - The number to format
      * @return {string} Formatted number string
      */
     function formatNumber(num) {
+        if (typeof num !== 'number') {
+            console.warn("formatNumber received non-numeric value:", num);
+            num = 0; // Default value or error handling
+        }
+      // Use 'en-US' for US English number formatting (period as decimal separator)
       return num.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
-    
+
     /**
      * Updates a summary card with current and previous values
      * @param {string} cardId - ID of the card element
@@ -601,121 +1008,131 @@
      */
     function updateSummaryCard(cardId, currentSum, previousSum) {
       const card = document.getElementById(cardId);
-      if (!card) return;
-      
+      if (!card) return; // Exit if card not found
+
       const valueEl = card.querySelector(".summary-value");
       const diffAmountEl = card.querySelector(".diff-amount");
       const diffPercentEl = card.querySelector(".diff-percentage");
       const indicator = card.querySelector(".summary-indicator");
-      
-      // Update the main value
+      const summaryDiff = card.querySelector(".summary-diff");
+
+      // Update main value
       valueEl.textContent = formatNumber(currentSum);
-      
+
       // Calculate difference and percentage
       const diff = currentSum - previousSum;
-      const diffPercent = previousSum !== 0 ? (diff / previousSum) * 100 : 0;
+      // Check for division by zero
+      const diffPercent = previousSum !== 0 ? (diff / previousSum) * 100 : (currentSum > 0 ? Infinity : 0);
+
       const diffStr = formatNumber(diff);
-      const pctStr = "(" + (diff >= 0 ? "+" : "") + formatNumber(diffPercent) + "%)";
-      
-      // If this is the YTD card, update the page title
+      let pctStr = "(0.0%)"; // Default
+      if (diffPercent === Infinity) {
+          pctStr = "(∞%)"; // Handle infinity
+      } else if (!isNaN(diffPercent)) {
+          pctStr = "(" + (diff >= 0 ? "+" : "") + formatNumber(diffPercent) + "%)";
+      }
+
+
+      // If it's the YTD card, update the page title
       if(cardId === "summary-ytd"){
         document.title = "Sales YTD: " + formatNumber(currentSum) + " " + pctStr;
       }
-      
-      // Update the indicator icon and colors based on difference
+
+      // Update indicator icon and colors based on difference
       const svgPath = indicator.querySelector("path");
+      indicator.classList.remove("indicator-positive", "indicator-negative", "indicator-neutral");
+      summaryDiff.classList.remove("diff-positive", "diff-negative");
+
       if (diff > 0) {
         // Positive change - green up arrow
-        indicator.classList.remove("indicator-negative", "indicator-neutral");
         indicator.classList.add("indicator-positive");
-        card.querySelector(".summary-diff").classList.remove("diff-negative");
-        card.querySelector(".summary-diff").classList.add("diff-positive");
-        svgPath.setAttribute("d", "M8 3L14 9H10V13H6V9H2L8 3Z"); 
+        summaryDiff.classList.add("diff-positive");
+        svgPath.setAttribute("d", "M8 3L14 9H10V13H6V9H2L8 3Z"); // Up arrow
       } else if (diff < 0) {
         // Negative change - red down arrow
-        indicator.classList.remove("indicator-positive", "indicator-neutral");
         indicator.classList.add("indicator-negative");
-        card.querySelector(".summary-diff").classList.remove("diff-positive");
-        card.querySelector(".summary-diff").classList.add("diff-negative");
-        svgPath.setAttribute("d", "M8 13L2 7H6V3H10V7H14L8 13Z");
+        summaryDiff.classList.add("diff-negative");
+        svgPath.setAttribute("d", "M8 13L2 7H6V3H10V7H14L8 13Z"); // Down arrow
       } else {
         // No change - gray horizontal line
-        indicator.classList.remove("indicator-positive", "indicator-negative");
         indicator.classList.add("indicator-neutral");
-        card.querySelector(".summary-diff").classList.remove("diff-positive", "diff-negative");
-        svgPath.setAttribute("d", "M3 8H13");
+        svgPath.setAttribute("d", "M3 8H13"); // Horizontal line
       }
-      
+
       // Update difference values
       diffAmountEl.textContent = diffStr;
       diffPercentEl.textContent = pctStr;
     }
-    
+
     /**
-     * Updates a summary period card (like last 3M, 6M, 12M)
+     * Updates a period summary card (e.g., Last 3M, 6M, 12M)
      * @param {string} cardId - ID of the card element
      * @param {number} days - Number of days in the period
-     * @param {Array} data - Sales data array
+     * @param {Array} data - Array of sales data
      * @param {string} endStr - End date string
      */
     function updateSummaryPeriod(cardId, days, data, endStr) {
       const startStr = dateNDaysBefore(endStr, days - 1);
       const sumCurrent = sumSalesInRange(data, startStr, endStr);
-      const prevEndStr = dateNDaysBefore(startStr, 1);
-      const prevStartStr = dateNDaysBefore(prevEndStr, days - 1);
+
+      const prevEndStr = dateNDaysBefore(startStr, 1); // End of previous period
+      const prevStartStr = dateNDaysBefore(prevEndStr, days - 1); // Start of previous period
       const sumPrev = sumSalesInRange(data, prevStartStr, prevEndStr);
+
       updateSummaryCard(cardId, sumCurrent, sumPrev);
     }
-    
+
     /**
      * Renders all summary cards
-     * @param {Array} allData - Complete sales data array
+     * @param {Array} allData - Full array of sales data
      */
     function renderSummaries(allData) {
-      if (!allData.length) {
-        resetAllSummaries();
+      if (!allData || allData.length === 0) {
+        resetAllSummaries(); // Reset if no data
         return;
       }
-      
-      // Find the most recent date in the data
+
+      // Find the latest date in the data
       const maxDate = new Date(Math.max(...allData.map(item => new Date(item.date).getTime())));
-      const endStr = formatDate(maxDate);
-      
-      // YTD calculation
+      const endStr = formatDate(maxDate); // End of the current period
+
+      // Calculate YTD (Year-To-Date)
       const currentYear = maxDate.getFullYear();
-      const ytdStartStr = formatDate(new Date(currentYear, 0, 1));
-      const ytdPrevStart = formatDate(new Date(currentYear - 1, 0, 1));
+      const ytdStartStr = formatDate(new Date(currentYear, 0, 1)); // Start of current year
+      const ytdPrevStart = formatDate(new Date(currentYear - 1, 0, 1)); // Start of previous year
+      // End of previous year corresponding to the current date
       const ytdPrevEnd = formatDate(new Date(currentYear - 1, maxDate.getMonth(), maxDate.getDate()));
       const ytdSum = sumSalesInRange(allData, ytdStartStr, endStr);
       const ytdPrevSum = sumSalesInRange(allData, ytdPrevStart, ytdPrevEnd);
       updateSummaryCard("summary-ytd", ytdSum, ytdPrevSum);
-      
-      // Week-to-date calculation
-      const monday = getMonday(maxDate);
+
+      // Calculate Week-To-Date
+      const monday = getMonday(maxDate); // Monday of the current week
       const weekToDateSum = sumSalesInRange(allData, formatDate(monday), endStr);
-      const weekDaysCount = Math.floor((maxDate.getTime() - monday.getTime()) / 86400000) + 1;
+      // Number of days from the start of the week to the current date
+      const weekDaysCount = Math.floor((maxDate.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       const previousMonday = new Date(monday);
-      previousMonday.setDate(previousMonday.getDate() - 7);
+      previousMonday.setDate(previousMonday.getDate() - 7); // Monday of the previous week
       const previousWeekEnd = new Date(previousMonday);
-      previousWeekEnd.setDate(previousWeekEnd.getDate() + weekDaysCount - 1);
+      previousWeekEnd.setDate(previousWeekEnd.getDate() + weekDaysCount - 1); // End of the previous week (up to the same day)
       const weekToDatePrevSum = sumSalesInRange(allData, formatDate(previousMonday), formatDate(previousWeekEnd));
       updateSummaryCard("summary-lastweek", weekToDateSum, weekToDatePrevSum);
-      
-      // Month-to-date calculation
-      const currentMonthStart = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+      // Calculate Month-To-Date
+      const currentMonthStart = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1); // Start of current month
       const monthToDateSum = sumSalesInRange(allData, formatDate(currentMonthStart), endStr);
-      const previousMonthStart = new Date(maxDate.getFullYear(), maxDate.getMonth() - 1, 1);
+      const previousMonthStart = new Date(maxDate.getFullYear(), maxDate.getMonth() - 1, 1); // Start of previous month
       const previousMonthEnd = new Date(previousMonthStart);
-      previousMonthEnd.setDate(previousMonthEnd.getDate() + maxDate.getDate() - 1);
+      previousMonthEnd.setDate(previousMonthEnd.getDate() + maxDate.getDate() - 1); // End of previous month (up to the same day number)
       const monthToDatePrevSum = sumSalesInRange(allData, formatDate(previousMonthStart), formatDate(previousMonthEnd));
       updateSummaryCard("summary-lastmonth", monthToDateSum, monthToDatePrevSum);
-      
-      // Last 3M, 6M, 12M calculations
+
+      // Calculate for Last 3M, 6M, 12M
       updateSummaryPeriod("summary-last3m", 90, allData, endStr);
       updateSummaryPeriod("summary-last6m", 180, allData, endStr);
       updateSummaryPeriod("summary-last12m", 365, allData, endStr);
     }
-    
+
     /**
      * Resets all summary cards to zero values
      */
@@ -724,52 +1141,66 @@
       ids.forEach(id => {
         const card = document.getElementById(id);
         if (!card) return;
-        card.querySelector(".summary-value").textContent = "0";
-        card.querySelector(".diff-amount").textContent = "0";
-        card.querySelector(".diff-percentage").textContent = "(0%)";
+        card.querySelector(".summary-value").textContent = "0.0";
+        card.querySelector(".diff-amount").textContent = "0.0";
+        card.querySelector(".diff-percentage").textContent = "(0.0%)";
         const indicator = card.querySelector(".summary-indicator");
+        const summaryDiff = card.querySelector(".summary-diff");
         indicator.classList.remove("indicator-positive", "indicator-negative");
         indicator.classList.add("indicator-neutral");
         const svgPath = indicator.querySelector("path");
-        svgPath.setAttribute("d", "M3 8H13");
-        card.querySelector(".summary-diff").classList.remove("diff-positive", "diff-negative");
+        svgPath.setAttribute("d", "M3 8H13"); // Horizontal line
+        summaryDiff.classList.remove("diff-positive", "diff-negative");
       });
+       document.title = "Sales Report"; // Reset title
     }
-    
+
     /**
      * Gets the Monday of the week for a given date
      * @param {Date} date - The date to check
-     * @return {Date} The Monday of that week
+     * @return {Date} Monday of that week
      */
     function getMonday(date) {
       const d = new Date(date);
-      const day = d.getDay();
+      const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      // Calculate the difference in days to Monday
+      // If the day is Sunday (0), subtract 6 days. Otherwise, subtract (day - 1).
       const diff = d.getDate() - (day === 0 ? 6 : day - 1);
       return new Date(d.getFullYear(), d.getMonth(), diff);
     }
-    
+
     /**
      * Initializes date filters with min/max dates from the data
      */
     function initializeDateFilters() {
       const startDateInput = document.getElementById('startDate');
       const endDateInput = document.getElementById('endDate');
+
+      if (!salesData || salesData.length === 0) {
+         // Set default dates if no data exists
+         const today = new Date();
+         const oneYearAgo = new Date();
+         oneYearAgo.setFullYear(today.getFullYear() - 1);
+         startDateInput.value = formatDate(oneYearAgo);
+         endDateInput.value = formatDate(today);
+         return;
+      }
+
       const dates = salesData.map(item => new Date(item.date));
       const minDate = new Date(Math.min(...dates));
       const maxDate = new Date(Math.max(...dates));
-      
-      // Set filter ranges and default values
+
+      // Set min/max ranges and default values for filters
       startDateInput.min = formatDate(minDate);
       startDateInput.max = formatDate(maxDate);
       endDateInput.min = formatDate(minDate);
       endDateInput.max = formatDate(maxDate);
-      startDateInput.value = formatDate(minDate);
-      endDateInput.value = formatDate(maxDate);
+      startDateInput.value = formatDate(minDate); // Default to earliest date
+      endDateInput.value = formatDate(maxDate);   // Default to latest date
     }
-    
-    // Sample sales data (would normally come from an API)
-    const salesData = [
 
+    // Example sales data (usually loaded from an API)
+    const salesData = [
 { date: '2023-01-02', sales: 188},
 { date: '2023-01-03', sales: 109},
 { date: '2023-01-04', sales: 197},
@@ -1499,79 +1930,156 @@
 { date: '2024-12-28', sales: 146},
 { date: '2024-12-29', sales: 167},
 
-
     ];
 
     // Chart instance variable
     let chart;
-    
+
     /**
-     * Main function to render the chart with current filters
+     * Gets current theme colors from CSS variables
+     * @return {object} Object with colors for the chart
+     */
+    function getThemeColors() {
+        // Use document.body to get computed styles, as the theme class is applied there
+        const style = getComputedStyle(document.body);
+        const colors = {
+            actual: style.getPropertyValue('--chart-actual').trim(),
+            past: style.getPropertyValue('--chart-past').trim(),
+            pastFillStart: style.getPropertyValue('--chart-past-fill-start').trim(),
+            pastFillEnd: style.getPropertyValue('--chart-past-fill-end').trim(),
+            average: style.getPropertyValue('--chart-average').trim(),
+            anomalies: style.getPropertyValue('--chart-anomalies').trim(),
+            legendText: style.getPropertyValue('--chart-legend-text').trim(),
+            ticksText: style.getPropertyValue('--chart-ticks-text').trim(),
+            titleText: style.getPropertyValue('--chart-title-text').trim(),
+            gridColor: style.getPropertyValue('--chart-grid-color').trim() // Get the new grid color
+        };
+        console.log('Current theme colors:', colors); // Log current colors
+        return colors;
+    }
+
+
+    /**
+     * Main function to render the chart with current filters and theme
      */
     function renderChart() {
       // Get current filter values
       const grouping = document.getElementById('grouping').value;
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
-      
+
       // Filter data by date range
-      const filteredData = salesData.filter(item => item.date >= startDate && item.date <= endDate);
-      
+      const filteredData = salesData.filter(item => {
+          const itemDate = new Date(item.date);
+          itemDate.setHours(0,0,0,0); // Consider date part only
+          // Ensure start and end dates are valid before comparing
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          return !isNaN(start) && !isNaN(end) && itemDate >= start && itemDate <= end;
+      });
+
+
       // Group data by selected period
       const groupedData = groupData(filteredData, grouping);
       const labels = groupedData.map(item => item.sortDate);
       const currentValues = groupedData.map(item => item.value);
-      
-      // Get data for past period (1 year ago)
+
+      // Get data for the past period (1 year ago)
       const pastStartDate = subtractOneYear(startDate);
       const pastEndDate = subtractOneYear(endDate);
-      const filteredPastData = salesData.filter(item => item.date >= pastStartDate && item.date <= pastEndDate);
+      const filteredPastData = salesData.filter(item => {
+          const itemDate = new Date(item.date);
+          itemDate.setHours(0,0,0,0);
+          // Ensure past start and end dates are valid before comparing
+          const pastStart = new Date(pastStartDate);
+          const pastEnd = new Date(pastEndDate);
+          return !isNaN(pastStart) && !isNaN(pastEnd) && itemDate >= pastStart && itemDate <= pastEnd;
+      });
       const pastGroupedData = groupData(filteredPastData, grouping);
-      
-      // Create mapping of past period labels to values
+
+      // Create a map of past period labels to values
       const pastDataMap = {};
       pastGroupedData.forEach(item => {
         pastDataMap[item.label] = item.value;
       });
-      
+
       // Get past values aligned with current period labels
       const pastValues = groupedData.map(item => {
         const pastLabel = getPastLabel(item.label, grouping);
-        return pastDataMap[pastLabel] || null;
+        return pastDataMap[pastLabel] !== undefined ? pastDataMap[pastLabel] : null; // Use null for missing data
       });
-      
-      // Get current toggle states
+
+      // Get current state of toggles
       const pastPeriodVisible = document.getElementById('togglePastPeriod').checked;
       const showGrid = document.getElementById('toggleGrid').checked;
       const showDataPoints = document.getElementById('toggleDataValues').checked;
       const showAverage = document.getElementById('toggleAverage').checked;
       const showAnomalies = document.getElementById('toggleAnomalies').checked;
-      
+
       // Calculate moving average (7 days for daily, 3 periods for others)
       const period = (grouping === 'daily') ? 7 : 3;
-      const movingAverage = currentValues.map((value, index) => {
+      const movingAverage = currentValues.map((value, index, arr) => {
         const startIdx = Math.max(0, index - period + 1);
-        const subset = currentValues.slice(startIdx, index + 1);
-        return subset.reduce((sum, v) => sum + v, 0) / subset.length;
+        const subset = arr.slice(startIdx, index + 1);
+        // Ensure all values in the subset are numbers
+        const numericSubset = subset.filter(v => typeof v === 'number');
+        if (numericSubset.length === 0) return null; // Return null if no numeric data
+        const sum = numericSubset.reduce((s, v) => s + v, 0);
+        return sum / numericSubset.length;
       });
-      
+
+
       // Identify anomalies (>20% deviation from moving average)
       const anomalies = currentValues.map((value, index) => {
         const avg = movingAverage[index];
-        return (Math.abs(value - avg) > 0.2 * avg) ? value : null;
+        // Check if both value and average are numbers
+        if (typeof value !== 'number' || typeof avg !== 'number' || avg === 0) {
+            return null;
+        }
+        // Use Math.abs for deviation
+        return (Math.abs(value - avg) > 0.2 * Math.abs(avg)) ? value : null;
       });
-      
+
+
       // Get chart context
       const ctx = document.getElementById('salesChart').getContext('2d');
-      
-      // Create gradient for past period fill
-      const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-      gradient.addColorStop(0, 'rgba(255,165,0,0.8)');
-      gradient.addColorStop(0.8, 'rgba(255,255,255,0.1)');
-      
-      // Destroy previous chart instance if exists
-      if (chart) chart.destroy();
-      
+
+      // Get current theme colors
+      const themeColors = getThemeColors();
+
+      // Create gradient for past period fill based on theme
+      // Ensure canvas height is available before creating gradient
+      const canvasHeight = ctx.canvas.height > 0 ? ctx.canvas.height : 400; // Use a default if 0
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+      gradient.addColorStop(0, themeColors.pastFillStart);
+      gradient.addColorStop(0.8, themeColors.pastFillEnd); // Use container background color for smooth transition
+
+      // Calculate the maximum value among the displayed datasets (current and past)
+      const allDisplayedValues = [];
+      if (currentValues.length > 0) {
+          allDisplayedValues.push(...currentValues.filter(v => typeof v === 'number'));
+      }
+       if (pastPeriodVisible && pastValues.length > 0) {
+           allDisplayedValues.push(...pastValues.filter(v => typeof v === 'number'));
+       }
+
+
+      let maxYValue = 0;
+      if (allDisplayedValues.length > 0) {
+          const maxDataValue = Math.max(...allDisplayedValues);
+          // Calculate Y-axis max with 20% buffer
+          maxYValue = maxDataValue * 1.2;
+      } else {
+           // If no data, set a default max value or keep it at 0
+           maxYValue = 100; // Example default
+      }
+
+
+      // Destroy previous chart instance if it exists
+      if (chart) {
+        chart.destroy();
+      }
+
       // Create new chart
       chart = new Chart(ctx, {
         type: 'line',
@@ -1579,60 +2087,72 @@
           labels: labels,
           datasets: [
             {
-              label: 'Actual Sales',
+              label: 'Current Sales',
               data: currentValues,
-              borderColor: 'blue',
-              backgroundColor: 'blue',
+              borderColor: themeColors.actual,
+              backgroundColor: themeColors.actual, // For points
               borderWidth: 3,
               fill: false,
               tension: 0.4,
-              pointRadius: showDataPoints ? 3 : 0
+              pointRadius: showDataPoints ? 3 : 0,
+              pointHoverRadius: showDataPoints ? 5 : 0
             },
             {
-              label: 'Past Period (1 year ago)',
+              label: 'Past Period (1 Year Ago)',
               data: pastValues,
-              borderColor: 'orange',
-              backgroundColor: gradient,
-              fill: true,
+              borderColor: themeColors.past,
+              backgroundColor: gradient, // Use gradient fill
+              borderWidth: 1, // Thinner line for past period
+              fill: true, // Enable fill
               tension: 0.4,
               hidden: !pastPeriodVisible,
-              pointRadius: showDataPoints ? 3 : 0
+              pointRadius: showDataPoints ? 3 : 0,
+              pointHoverRadius: showDataPoints ? 5 : 0,
+              spanGaps: true // Connect points across null values
             },
             {
               label: 'Average Sales',
               data: movingAverage,
-              borderColor: 'purple',
-              backgroundColor: 'purple',
-              borderDash: [5, 5],
+              borderColor: themeColors.average,
+              backgroundColor: themeColors.average,
+              borderWidth: 1.5, // Average line thickness
+              borderDash: [5, 5], // Dashed line
               fill: false,
               tension: 0.4,
               hidden: !showAverage,
-              pointRadius: showDataPoints ? 3 : 0
+              pointRadius: showDataPoints ? 3 : 0,
+              pointHoverRadius: showDataPoints ? 5 : 0,
+              spanGaps: true
             },
             {
               label: 'Anomalies',
               data: anomalies,
-              borderColor: 'red',
-              backgroundColor: 'red',
+              borderColor: themeColors.anomalies,
+              backgroundColor: themeColors.anomalies, // Point color
               fill: false,
               tension: 0.4,
               hidden: !showAnomalies,
-              pointRadius: 5,
-              showLine: false
+              pointRadius: 5, // Larger radius for anomalies
+              pointHoverRadius: 7,
+              showLine: false // Don't connect anomaly points with a line
             }
           ]
         },
         options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
+          responsive: true, // Make chart responsive
+          maintainAspectRatio: false, // Allows setting custom height
+          interaction: {
+              mode: 'index', // Show tooltips for all points on the same X-axis index
+              intersect: false // Tooltip appears when hovering over the X-axis area
+          },
           plugins: {
             legend: {
               display: true,
               labels: {
+                color: themeColors.legendText, // Legend text color from theme
                 boxWidth: 10,
                 boxHeight: 10,
-                // Only show legend items for visible datasets
+                // Filter to show only visible datasets
                 filter: function(legendItem, chartData) {
                   const ds = chartData.datasets[legendItem.datasetIndex];
                   return !ds.hidden;
@@ -1643,20 +2163,46 @@
               mode: 'index',
               intersect: false,
               callbacks: {
+                // Format tooltip title
                 title: (tooltipItems) => {
+                  // Use the first item to get the date
+                  if (!tooltipItems.length) return '';
                   const date = new Date(tooltipItems[0].parsed.x);
                   return formatXAxisLabel(date, grouping);
+                },
+                 // Format tooltip label value
+                 label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed.y !== null && typeof context.parsed.y === 'number') {
+                        // Use formatNumber for localized formatting
+                        label += formatNumber(context.parsed.y);
+                    } else {
+                         label += '-'; // Show dash for null/undefined
+                    }
+                    return label;
                 }
               }
             },
-            datalabels: {
-              display: showDataPoints,
-              align: 'top',
-              formatter: function(value) {
-                return Math.round(value);
+            datalabels: { // DataLabels plugin settings
+              display: showDataPoints, // Toggle display
+              align: 'top', // Align above the point
+              offset: 5, // Offset from the point
+              formatter: function(value, context) {
+                // Display only for 'Anomalies' dataset or if showDataPoints is enabled for others
+                if (context.dataset.label === 'Anomalies' || showDataPoints) {
+                    return (typeof value === 'number') ? Math.round(value) : ''; // Round the number
+                }
+                return ''; // Don't display for other datasets if showDataPoints is off
               },
               color: function(context) {
-                return context.dataset.borderColor;
+                  // Use the dataset's border color for the label
+                  return context.dataset.borderColor;
+              },
+              font: {
+                  weight: 'bold'
               }
             }
           },
@@ -1664,40 +2210,103 @@
             x: {
               type: 'time',
               time: {
+                // Define time unit for X-axis
                 unit: (grouping === 'daily')
                   ? 'day'
                   : (grouping === 'weekly' || grouping === 'monthly' || grouping === 'quarterly')
                     ? 'month'
                     : 'year',
-                displayFormats: { month: 'MMM-yy' }
-              },
-              ticks: {
-                callback: function(value) {
-                  const date = new Date(value);
-                  return formatXAxisLabel(date, grouping);
+                // Display formats for different time units
+                displayFormats: {
+                    day: 'MMM dd', // 'Jan 01'
+                    month: 'MMM-yy', // 'Jan-23'
+                    year: 'yyyy' // '2023'
                 }
               },
-              grid: { display: showGrid },
-              title: { display: true, text: 'Period' }
+              ticks: {
+                color: themeColors.ticksText, // X-axis ticks color from theme
+                // Format X-axis tick labels
+                callback: function(value, index, ticks) {
+                  const date = new Date(value);
+                  // Skip some labels for readability if there are many
+                   if (ticks.length > 20 && index % Math.ceil(ticks.length / 15) !== 0) {
+                       return null; // Skip label
+                   }
+                  return formatXAxisLabel(date, grouping);
+                },
+                maxRotation: 45, // Max rotation angle for labels
+                minRotation: 0
+              },
+              grid: {
+                  display: showGrid, // Show/hide X-axis grid
+                  color: themeColors.gridColor // Use the new grid color variable
+              },
+              title: {
+                  display: true,
+                  text: 'Period', // X-axis title
+                  color: themeColors.titleText // X-axis title color from theme
+              }
             },
             y: {
-              min: 0,
-              grid: { display: showGrid },
-              title: { display: true, text: 'Sales' },
+              min: 0, // Minimum Y-axis value
+              max: maxYValue, // Set the calculated max value
               ticks: {
+                color: themeColors.ticksText, // Y-axis ticks color from theme
+                // Format Y-axis tick labels
                 callback: function(value) {
-                  return Math.round(value);
+                  // Use formatNumber for localized formatting
+                  return formatNumber(value);
                 }
+              },
+              grid: {
+                  display: showGrid, // Show/hide Y-axis grid
+                  color: themeColors.gridColor // Use the new grid color variable
+              },
+              title: {
+                  display: true,
+                  text: 'Sales', // Y-axis title
+                  color: themeColors.titleText // Y-axis title color from theme
               }
             }
           }
         }
       });
-      
-      // Update summary cards with full dataset
+
+      // Update summary cards with the full dataset
       renderSummaries(salesData);
     }
-    
+
+    // --- Theme Toggle Logic ---
+    const themeToggleButton = document.getElementById('theme-toggle');
+    const body = document.body;
+
+    // Check for saved theme in localStorage
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === 'light') {
+        body.classList.add('light-theme');
+        themeToggleButton.textContent = 'Dark Mode';
+    } else {
+        themeToggleButton.textContent = 'Light Mode'; // Default is dark
+    }
+
+    themeToggleButton.addEventListener('click', () => {
+        console.log('Theme toggled, rendering chart...'); // Log theme toggle
+        body.classList.toggle('light-theme');
+
+        // Update button text and save theme preference
+        if (body.classList.contains('light-theme')) {
+            themeToggleButton.textContent = 'Dark Mode';
+            localStorage.setItem('theme', 'light');
+        } else {
+            themeToggleButton.textContent = 'Light Mode';
+            localStorage.setItem('theme', 'dark');
+        }
+
+        // Re-render the chart with new theme colors
+        renderChart();
+    });
+
+
     // Add event listeners for all filter controls
     document.getElementById('startDate').addEventListener('change', renderChart);
     document.getElementById('endDate').addEventListener('change', renderChart);
@@ -1707,10 +2316,26 @@
     document.getElementById('toggleDataValues').addEventListener('change', renderChart);
     document.getElementById('toggleAnomalies').addEventListener('change', renderChart);
     document.getElementById('toggleAverage').addEventListener('change', renderChart);
-    
-    // Initialize the page
-    initializeDateFilters();
-    renderChart();
+
+    // Initialize the page and render chart on window load
+    window.onload = function() {
+        initializeDateFilters(); // Set date ranges
+        renderChart(); // Initial render of chart (without past period)
+
+        // Set a timeout to check the checkbox and re-render after 300ms
+        setTimeout(() => {
+            const togglePastPeriodCheckbox = document.getElementById('togglePastPeriod');
+            if (togglePastPeriodCheckbox) {
+                togglePastPeriodCheckbox.checked = true;
+                renderChart(); // Re-render the chart with past period visible
+            }
+        }, 300); // 300 milliseconds delay
+    };
+
+
+    // Add a resize event listener to re-render the chart when the window is resized
+    window.addEventListener('resize', renderChart);
+
   </script>
 </body>
 </html>
