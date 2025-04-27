@@ -1,4 +1,4 @@
-# Portfolio
+## Portfolio
 
 # About me
 Transforming complex data into actionable insights to drive strategic decisions and business growth. Experienced in leading BI teams, optimizing reporting processes, and implementing advanced analytics solutions that improve operational efficiency and profitability.
