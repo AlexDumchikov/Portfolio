@@ -8,7 +8,6 @@ Proficient in SQL, Excel, Python, Tableau, Power BI, Business Modelling, Automat
 20+ years of driving efficiency and strategic insights in FMCG.
 6+ years of People Management.
 
+https://alexdumchikov.github.io/Portfolio/
 
-[https://alexdumchikov.github.io/Portfolio/Dashboards/Dashboard_on_JavaScript.html](https://alexdumchikov.github.io/Portfolio/)
 
-![screenshot of dashboard](https://github.com/user-attachments/assets/c65bd4e8-05f3-432d-9aaf-a4344e762588)
