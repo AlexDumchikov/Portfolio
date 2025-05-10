@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "mongodb": "^6.16.0"
+  },
+  "name": "portfolio",
+  "version": "1.0.0",
+  "description": "## About me  www.linkedin.com/in/aleksandr-dumchykov-a1894188",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
